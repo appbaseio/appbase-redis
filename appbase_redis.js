@@ -42,10 +42,6 @@ functions.getCollections = function getCollections(done) {
 
 /* Document methods - create, update, delete, get */
 
-functions.createDocument = function createDocument(collection, name, body, done) {
-  updateDocument(collection, name, body, done)
-}
-
 functions.updateDocument = function updateDocument(collection, name, body, done) {
   // 3-step process
   // Step 1: parse the body to separate properties and references.
@@ -105,7 +101,11 @@ functions.updateDocument = function updateDocument(collection, name, body, done)
   })
 }
 
-functions.getDocument = function getDocument(collection, name, done) {
+functions.createDocument = function createDocument(collection, name, body, done) {
+  functions.updateDocument(collection, name, body, done)
+}
+
+functions.getDocument = function getDocument(collection, name, getReferences, timestamp, done) {
   client.hgetall("d`"+collection+"`"+name, function(err, res) {
     if (err) return done(err);
     done(null, res)
@@ -118,7 +118,7 @@ functions.deleteDocument = function deleteDocument(collection, name, done) {
 
 functions.traverse = function traverse(collection, name, edgePath, done) {
   // edge-case when there is no edgePath
-  if (edgePath.length === 0) return done(null, collection, name);
+  if (!edgePath || edgePath.length === 0) return done(null, collection, name);
   client.hget("r`"+collection+"`"+name, edgePath[0], function(err, res) {
     if (err) return done(err);
     if (res === null) return done(new Error("Path does not exist"))
