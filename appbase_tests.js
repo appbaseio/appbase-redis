@@ -65,6 +65,17 @@ describe("Internal tests", function() {
       })
     })
   })
+
+  describe("Get Document Parents", function() {
+    it("should return the parents of a document as an array of col/doc format", function(done) {
+      ar._getDocumentParents("testcollection4238", "anythingworks", function(err, res) {
+        if (err) throw err;
+        expect(res).to.be.an("Array")
+        console.log(res)
+        done();
+      })
+    })
+  })
 })
 
 describe("Collection tests", function() {

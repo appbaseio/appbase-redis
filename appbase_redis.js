@@ -76,6 +76,7 @@ functions.updateDocument = function updateDocument(collection, name, body, done)
         r_c_name = res.references[key]._collection
         r_d_id = res.references[key]._id
         multi.hset(r_id, key, "d`"+r_c_name+"`"+r_d_id)
+        multi.sadd("p`"+r_c_name+"`"+r_d_id, d_id) // add current doc as parent ref.
         // Now, recursively build up each reference first.
         functions.updateDocument(r_c_name, r_d_id, res.references[key], function(err, res) {
           if (err) return done(err);
@@ -89,6 +90,7 @@ functions.updateDocument = function updateDocument(collection, name, body, done)
         functions.traverse(edgePath[0], edgePath[1], edgePath.slice(2), function(err, c_final, d_final) {
           if (err) return done(err);
           multi.hset(r_id, key, "d`"+c_final+"`"+d_final)
+          multi.sadd("p`"+c_final+"`"+d_final, d_id) // add current doc as parent ref.
         })
       }
 
@@ -133,6 +135,15 @@ functions.traverse = function traverse(collection, name, edgePath, done) {
 
 // Internal functions
 
+functions._serverTime = function _serverTime() {
+  var timeInstance = new Date
+  return {
+    "_timestamp": timeInstance.getTime(),
+    "_timezoneOffset": timeInstance.getTimezoneOffset(),
+    "_ISOString": timeInstance.toISOString()
+  }
+}
+
 functions._getCollection = function _getCollection(name, done) {
   client.zscore("collections", name, function(err, memberTimestamp) {
     if (!memberTimestamp) {
@@ -143,13 +154,17 @@ functions._getCollection = function _getCollection(name, done) {
   })
 }
 
-functions._serverTime = function _serverTime() {
-  var timeInstance = new Date
-  return {
-    "_timestamp": timeInstance.getTime(),
-    "_timezoneOffset": timeInstance.getTimezoneOffset(),
-    "_ISOString": timeInstance.toISOString()
-  }
+functions._getDocumentParents = function _getDocumentParents(collection, name, done) {
+  parent_id = "p`"+collection+"`"+name
+  client.smembers(parent_id, function(err, res) {
+    if (err) return done(err);
+    // translate to collection/document syntax
+    parents = []
+    for (var key in res) {
+      parents.push(res[key].split("`")[1]+"/"+res[key].split("`")[2])
+    }
+    return done(null, res);
+  })
 }
 
 functions._parseDocumentBody = function _parseDocumentBody(body, done) {
