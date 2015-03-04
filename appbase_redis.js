@@ -59,7 +59,7 @@ functions.updateDocument = function updateDocument(collection, name, body, done)
     // Add all properties to the document d_id
     for (var key in res.properties) {
       // TBD: only stringify if an object.
-      multi.hset(d_id, key, JSON.stringify(res.properties[key]), redis.print)
+      multi.hset(d_id, key, JSON.stringify(res.properties[key]))
     }
     // Always set _id and _collection as the document and collection id and names. Overwrite to ensure no updates.
     multi.hset(d_id, "_id", name)
@@ -92,11 +92,18 @@ functions.updateDocument = function updateDocument(collection, name, body, done)
 
     }
     // Add the document in the collection now
-    multi.zadd(c_name, Date.now(), d_id, redis.print)
+    multi.zadd(c_name, Date.now(), d_id)
     // Execute now
     multi.exec(function(err, replies) {
       if (err) return done(err);
-      done(null, replies);
+      buildReply = {}
+      for (var key in res.properties) {
+        buildReply[key] = res.properties[key]
+      }
+      for (var key in res.references) {
+        buildReply["/"+key] = res.references[key]
+      }
+      done(null, buildReply);
     })
   })
 }
