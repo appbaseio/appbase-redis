@@ -148,7 +148,7 @@ describe("Document tests", function() {
 
   describe("Get a document", function() {
     it("should return an existing document", function(done) {
-      ar.getDocument('foobar12', 'dabang', function(err, res) {
+      ar.getDocument('foobar12', 'dabang', true, false, function(err, res) {
         if (err) throw err;
         expect(res).to.have.property('hello').to.equal('"js"')
         done();
