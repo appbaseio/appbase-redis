@@ -1,13 +1,17 @@
-var redis = require("redis"),
-    client = redis.createClient();
+var redis = require("redis")
+var client
 
 var functions = {}
 
-client.on("error", function (err) {
-  console.log("Error " + err);
-});
-
 /* Collection methods - create, delete, get */
+
+functions.connect = function connect(port, hostname) {
+  client = redis.createClient(port, hostname, {})
+  client.on("error", function (err) {
+    console.log("Error " + err)
+  })
+  functions.client = client
+}
 
 functions.createCollection = function createCollection(name, done) {
   var timestamp = Date.now()
@@ -50,7 +54,7 @@ functions.updateDocument = function updateDocument(collection, name, body, done)
 
   // step 1
   functions._parseDocumentBody(body, function(err, res) {
-    if (err) return done(err);
+    if (err) return done(err)
     // Step 2: Start transaction.
     c_name = "c`"+collection
     d_id = "d`"+collection+"`"+name
@@ -75,7 +79,7 @@ functions.updateDocument = function updateDocument(collection, name, body, done)
         multi.sadd("b`"+r_c_name+"`"+r_d_id, d_id+"`"+key) // add current doc as parent ref.
         // Now, recursively build up each reference first.
         functions.updateDocument(r_c_name, r_d_id, res.references[key], function(err, res) {
-          if (err) return done(err);
+          if (err) return done(err)
         })
       }
       // case-2: res.references[key] points to a path. follows...
@@ -84,7 +88,7 @@ functions.updateDocument = function updateDocument(collection, name, body, done)
         edgePath = functions._pathResolution(res.references[key])
         console.log(edgePath)
         functions.traverse(edgePath[0], edgePath[1], edgePath.slice(2), function(err, c_final, d_final) {
-          if (err) return done(err);
+          if (err) return done(err)
           multi.hset(r_id, key, "d`"+c_final+"`"+d_final)
           multi.sadd("b`"+c_final+"`"+d_final, d_id) // add current doc as parent ref.
         })
@@ -95,8 +99,8 @@ functions.updateDocument = function updateDocument(collection, name, body, done)
     multi.zadd(c_name, Date.now(), d_id, redis.print)
     // Execute now
     multi.exec(function(err, replies) {
-      if (err) return done(err);
-      done(null, replies);
+      if (err) return done(err)
+      done(null, replies)
     })
   })
 }
@@ -107,7 +111,7 @@ functions.createDocument = function createDocument(collection, name, body, done)
 
 functions.getDocument = function getDocument(collection, name, getReferences, timestamp, done) {
   client.hgetall("d`"+collection+"`"+name, function(err, res) {
-    if (err) return done(err);
+    if (err) return done(err)
     done(null, res)
   })
 }
@@ -118,9 +122,9 @@ functions.deleteDocument = function deleteDocument(collection, name, done) {
 
 functions.traverse = function traverse(collection, name, edgePath, done) {
   // edge-case when there is no edgePath
-  if (!edgePath || edgePath.length === 0) return done(null, collection, name);
+  if (!edgePath || edgePath.length === 0) return done(null, collection, name)
   client.hget("r`"+collection+"`"+name, edgePath[0], function(err, res) {
-    if (err) return done(err);
+    if (err) return done(err)
     if (res === null) return done(new Error("Path does not exist"))
     collection = res.split("`")[1]
     name = res.split("`")[2]
@@ -157,14 +161,14 @@ functions._getCollection = function _getCollection(name, done) {
 functions._getBackReferences = function _getBackReferences(collection, name, done) {
   parent_id = "b`"+collection+"`"+name
   client.smembers(parent_id, function(err, res) {
-    if (err) return done(err);
+    if (err) return done(err)
     // translate to collection/document syntax
     backReferences = []
     for (var key in res) {
       reference = res[key].split("`")
       backReferences.push(reference[1]+"/"+reference[2]+"/"+reference[3])
     }
-    return done(null, backReferences);
+    return done(null, backReferences)
   })
 }
 
