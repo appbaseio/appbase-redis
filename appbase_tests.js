@@ -132,7 +132,13 @@ describe("Document tests", function() {
     it("should create document and reference. reference depth=1, new document=true", function(done) {
       ar.updateDocument('foobar12', 'dabang', exampleRequestBody, function(err, res) {
         if (err) throw err;
-        console.log("no error thrown");
+        expect(res).to.have.property('hello').to.equal('js')
+        expect(res).to.have.property('everything').to.equal(true)
+        expect(res).to.have.property('/foo')
+        expect(res).to.have.property('/foo').to.have.property('_id').to.equal('anythingworks')
+        expect(res).to.have.property('/foo').to.have.property('_collection').to.equal('testcollection4238')
+        expect(res).to.have.property('/foo').to.have.property('this').to.equal('is awesome')
+        expect(res).to.have.property('/foo').to.have.property('life').to.equal(42)
         done();
       })
     })
@@ -140,7 +146,10 @@ describe("Document tests", function() {
       exampleRequestBody['/foo'] = 'foobar12/dabang'
       ar.updateDocument('foobar12', 'dabang', exampleRequestBody, function(err, res) {
         if (err) throw err;
-        console.log("no error thrown");
+
+        expect(res).to.have.property('hello').to.equal('js')
+        expect(res).to.have.property('everything').to.equal(true)
+        expect(res).to.have.property('/foo').to.equal('foobar12/dabang')
         done();
       })
     })
@@ -148,7 +157,7 @@ describe("Document tests", function() {
 
   describe("Get a document", function() {
     it("should return an existing document", function(done) {
-      ar.getDocument('foobar12', 'dabang', function(err, res) {
+      ar.getDocument('foobar12', 'dabang', true, false, function(err, res) {
         if (err) throw err;
         expect(res).to.have.property('hello').to.equal('"js"')
         done();
