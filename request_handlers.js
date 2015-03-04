@@ -1,5 +1,5 @@
 var async = require('async')
-var grip = require('grip')
+var events = require('events')
 
 var db = require(__dirname + '/appbase_redis')
 db.connect(6379, '127.0.0.1')
@@ -91,19 +91,37 @@ request_handlers.getDocument = function getDocument(request, reply) {
             var edgepath = db._pathResolution(request.params.edgepath)
             db.traverse(request.params.collection, request.params.rootdoc, edgepath, callback)
         },
-        function(collection_name, name, callback) {
+        function(collection_name_temp, name_temp, callback) {
+            collection_name = collection_name_temp
+            name = name_temp
             var timestamp = -1
-            if (!isNaN(request.params.timestamp)) {
-                timestamp = parseInt(request.params.timestamp)
+            if (!isNaN(request.query.timestamp)) {
+                timestamp = parseInt(request.query.timestamp)
             }
             var references = true
-            if (request.params.references == "false") {
+            if (request.query.references == "false") {
                 references = false
             }
             db.getDocument(collection_name, name, references, timestamp, callback)
         }
     ], function(err, result) {
-        resultHandler(err, result, reply)
+        if (err) {
+            resultHandler(err, result, reply)
+        } else if (request.query.stream == "true") {
+            var listen = new events.EventEmitter();
+            request.raw.res.writeHead(200, { 'transfer-encoding': 'chunked', 'content-type': 'application/json; charset=utf-8', 'connection': 'keep-alive', 'cache-control': 'no-cache' })
+            event_handler.receive_events(collection_name, name, "", listen, function(err, data) {
+                if (data) {
+                    request.raw.res.write(JSON.stringify(data) + "\n")
+                }
+            })
+            request.raw.res.write(JSON.stringify(result) + "\n")
+            request.raw.res.on('close', function() {
+                listen.emit('off')
+            })
+        } else {
+            resultHandler(err, result, reply)
+        }
     })
 }
 
