@@ -1,4 +1,5 @@
 var redis = require("redis")
+var async = require("async")
 var client
 
 var functions = {}
@@ -86,11 +87,10 @@ functions.updateDocument = function updateDocument(collection, name, body, done)
       else {
         // resolve path
         edgePath = functions._pathResolution(res.references[key])
-        console.log(edgePath)
         functions.traverse(edgePath[0], edgePath[1], edgePath.slice(2), function(err, c_final, d_final) {
           if (err) return done(err)
           multi.hset(r_id, key, "d`"+c_final+"`"+d_final)
-          multi.sadd("b`"+c_final+"`"+d_final, d_id) // add current doc as parent ref.
+          multi.sadd("b`"+c_final+"`"+d_final, d_id+"`"+key) // add current doc as parent ref.
         })
       }
 
@@ -117,14 +117,61 @@ functions.createDocument = function createDocument(collection, name, body, done)
 }
 
 functions.getDocument = function getDocument(collection, name, getReferences, timestamp, done) {
-  client.hgetall("d`"+collection+"`"+name, function(err, res) {
+  var result
+  async.waterfall([
+    function(callback) {
+      client.hgetall("d`"+collection+"`"+name, function(err, res) {
+        if (err) return callback(err)
+        for (var prop in res) {
+          if (res.hasOwnProperty(prop)) {
+            try {
+              res[prop] = JSON.parse(res[prop])
+            } catch(e) {
+            }
+          }
+        }
+        result = res
+        callback(null)
+      })
+    },
+    function(callback) {
+      client.hgetall("r`"+collection+"`"+name, callback)
+    },
+    function(references, callback) {
+      async.eachLimit(references, 15, function(name, callback) {
+        var reference = references[name].split("`")
+        client.hgetall("d`"+reference[1]+"`"+reference[2], function(err, res) {
+          if (err) return callback(err)
+          for (var prop in res) {
+            if (res.hasOwnProperty(prop)) {
+              res[prop] = JSON.parse(res[prop])
+            }
+          }
+          result["/"+name] = res
+          callback(null)
+        })
+      }, callback)
+    }
+  ], function(err) {
     if (err) return done(err)
-    done(null, res)
+    done(null, result)
   })
+  
 }
 
 functions.deleteDocument = function deleteDocument(collection, name, done) {
   // what to do here.
+}
+
+functions._pathResolution = function _pathResolution(path) {
+  // converts something like /a/b//c to ["a", "b", "c"]
+  if (path && path.length > 0) {
+    var edgePath = path.split("/")
+    edgePath = edgePath.filter(function(element) {return element !== ""})
+    return edgePath
+  } else {
+    return []
+  }
 }
 
 functions.traverse = function traverse(collection, name, edgePath, done) {
@@ -197,13 +244,6 @@ functions._parseDocumentBody = function _parseDocumentBody(body, done) {
     }
   }
   done(null, res)
-}
-
-functions._pathResolution = function _pathResolution(path) {
-  // converts something like /a/b//c to ["a", "b", "c"]
-  var edgePath = path.split("/")
-  edgePath = edgePath.filter(function(element) {return element !== ""})
-  return edgePath
 }
 
 module.exports = functions

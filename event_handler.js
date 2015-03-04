@@ -66,6 +66,7 @@ event_handler.send_event = function send_event(collection_name, name, result) {
         function(backReferences, callback) {
             async.eachLimit(backReferences, 15, function(backReference, callback) {
                 publish_event(backReference, result, callback)
+                callback(null)
             }, callback)
         }
     ], function(err) {

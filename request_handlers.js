@@ -88,7 +88,8 @@ request_handlers.createDocument = function createDocument(request, reply) {
 request_handlers.getDocument = function getDocument(request, reply) {
     async.waterfall([
         function(callback) {
-            db.traverse(request.params.collection, request.params.rootdoc, request.params.edgepath, callback)
+            var edgepath = db._pathResolution(request.params.edgepath)
+            db.traverse(request.params.collection, request.params.rootdoc, edgepath, callback)
         },
         function(collection_name, name, callback) {
             var timestamp = -1
@@ -110,7 +111,8 @@ request_handlers.updateDocument = function updateDocument(request, reply) {
     var collection_name, name
     async.waterfall([
         function(callback) {
-            db.traverse(request.params.collection, request.params.rootdoc, request.params.edgepath, callback)
+            var edgepath = db._pathResolution(request.params.edgepath)
+            db.traverse(request.params.collection, request.params.rootdoc, edgepath, callback)
         },
         function(collection_name_temp, name_temp, callback) {
             collection_name = collection_name_temp
@@ -130,7 +132,8 @@ request_handlers.updateDocument = function updateDocument(request, reply) {
 request_handlers.deleteDocument = function deleteDocument(request, reply) {
     async.waterfall([
         function(callback) {
-            db.traverse(request.params.collection, request.params.rootdoc, request.params.edgepath, callback)
+            var edgepath = db._pathResolution(request.params.edgepath)
+            db.traverse(request.params.collection, request.params.rootdoc, edgepath, callback)
         },
         function(collection_name, name, callback) {
             db.deleteDocument(collection_name, name, callback)
