@@ -130,7 +130,7 @@ describe("Document tests", function() {
 
   describe("Create / Update a document", function() {
     it("should create document and reference. reference depth=1, new document=true", function(done) {
-      ar.updateDocument('foobar12', 'dabang', exampleRequestBody, function(err, res) {
+      ar.updateDocument('hello', 'trythis', exampleRequestBody, function(err, res) {
         if (err) throw err;
         expect(res).to.have.property('hello').to.equal('js')
         expect(res).to.have.property('everything').to.equal(true)
@@ -159,7 +159,7 @@ describe("Document tests", function() {
     it("should return an existing document", function(done) {
       ar.getDocument('foobar12', 'dabang', true, false, function(err, res) {
         if (err) throw err;
-        expect(res).to.have.property('hello').to.equal('"js"')
+        expect(res).to.have.property('hello').to.equal('js')
         done();
       })
     })

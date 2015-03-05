@@ -1,6 +1,6 @@
 var redis = require("redis")
 var async = require("async")
-var client
+var client = redis.createClient();
 
 var functions = {}
 
@@ -157,7 +157,7 @@ functions.getDocument = function getDocument(collection, name, getReferences, ti
     if (err) return done(err)
     done(null, result)
   })
-  
+
 }
 
 functions.deleteDocument = function deleteDocument(collection, name, done) {
