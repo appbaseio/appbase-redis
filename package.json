@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "./node_modules/mocha/bin/mocha appbase_tests.js"
+    "test": "mocha ."
   },
   "author": "",
   "license": "ISC",
@@ -16,5 +16,9 @@
     "good-console": "^4.1.0",
     "hapi": "^8.2.0",
     "redis": "^0.12.1"
+  },
+  "devDependencies": {
+    "chai": "^2.1.1",
+    "mocha": "^2.1.0"
   }
 }
