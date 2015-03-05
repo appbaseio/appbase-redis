@@ -75,7 +75,7 @@ request_handlers.createDocument = function createDocument(request, reply) {
     })
 }
 
-/*request_handlers.getCollection = function getCollection(request, reply) {
+request_handlers.getCollection = function getCollection(request, reply) {
     async.waterfall([
         function(callback) {
             db.getCollection(request.params.collection, callback)
@@ -83,7 +83,7 @@ request_handlers.createDocument = function createDocument(request, reply) {
     ], function(err, result) {
         resultHandler(err, result, reply)
     })
-}*/
+}
 
 request_handlers.getDocument = function getDocument(request, reply) {
     async.waterfall([

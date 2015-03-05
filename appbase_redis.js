@@ -138,6 +138,7 @@ functions.getDocument = function getDocument(collection, name, getReferences, ti
       client.hgetall("r`"+collection+"`"+name, callback)
     },
     function(references, callback) {
+      if (!references) return callback(null)
       async.eachLimit(references, 15, function(name, callback) {
         var reference = references[name].split("`")
         client.hgetall("d`"+reference[1]+"`"+reference[2], function(err, res) {
