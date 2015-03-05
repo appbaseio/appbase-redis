@@ -4,8 +4,8 @@ var Good = require('good')
 var rh = require(__dirname + '/request_handlers')
 
 var server = new Hapi.Server()
-server.connection({ 
-    port: parseInt(process.env.PORT, 10) || 3000, 
+server.connection({
+    port: parseInt(process.env.PORT, 10) || 3000,
     routes: {
         cors: {
             methods: ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
@@ -16,10 +16,10 @@ server.connection({
 var collectionPath = '/{collection}'
 var documentPath = '/{collection}/{rootdoc}/{edgepath*}'
 
-server.route({ 
-    method: '*', 
-    path: '/{p*}', 
-    handler: rh.notFound 
+server.route({
+    method: '*',
+    path: '/{p*}',
+    handler: rh.notFound
 })
 
 server.route({
@@ -43,11 +43,11 @@ server.route({
     path: collectionPath,
     handler: rh.createDocument
 })
-/*server.route({
+server.route({
     method: 'GET',
     path: collectionPath,
     handler: rh.getCollection
-})*/
+})
 
 server.route({
     method: 'GET',

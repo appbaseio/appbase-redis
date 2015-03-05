@@ -45,6 +45,18 @@ functions.getCollections = function getCollections(done) {
   })
 }
 
+functions.getCollection = function getCollection(name, done) {
+  client.zrangebyscore("c`"+name, "-inf", "+inf", function(err, res) {
+    if (err) {
+      done(err)
+    } else {
+      done(null, res.map(function(element) {
+        return element.split("`")[2]
+      }))
+    }
+  })
+}
+
 /* Document methods - create, update, delete, get */
 
 functions.updateDocument = function updateDocument(collection, name, body, done) {
