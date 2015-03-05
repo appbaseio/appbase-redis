@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/mocha/bin/mocha appbase_tests.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "async": "^0.9.0",
+    "mocha": "^2.1.0",
     "good": "^5.1.2",
     "good-console": "^4.1.0",
     "hapi": "^8.2.0",
